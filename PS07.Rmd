@@ -1,6 +1,6 @@
 ---
 title: "STAT/MATH 495: Problem Set 07"
-author: "WRITE YOUR NAME HERE"
+author: "WRITE YOUR NAME(S) HERE"
 date: "2017-10-24"
 output:
   html_document:
@@ -22,9 +22,15 @@ set.seed(76)
 library(tidyverse)
 library(broom)
 library(knitr)
+
+train <- read_csv("data/cs-training.csv") %>% 
+  rename(Id = X1)
+test <- read_csv("data/cs-test.csv") %>% 
+  rename(Id = X1)
+submission <- read_csv("data/sampleEntry.csv")
 ```
 
-
+Information on the competition can be found [here](https://www.kaggle.com/c/GiveMeSomeCredit/data).
 
 
 
@@ -34,6 +40,32 @@ Please indicate who you collaborated with on this assignment:
 
 
 
+# Build binary classifier
+
+Build the binary classifier based on a single predictor variable: `DebtRatio`,
+`age`, or `MonthlyIncome`. Justify this choice.
+
+```{r}
+
+```
 
 
 
+# ROC curve
+
+Based on the ultimate classifier you choose, plot a corresponding ROC curve.
+
+```{r}
+
+```
+
+
+
+# ROC curve for random guessing
+
+Instead of using any predictor information as you did above, switch your
+predictions to random guesses and plot the resulting ROC curve.
+
+```{r}
+
+```
