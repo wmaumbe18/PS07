@@ -1,6 +1,6 @@
 ---
 title: "STAT/MATH 495: Problem Set 07"
-author: "WRITE YOUR NAME(S) HERE"
+author: "Wayne Maumbe"
 date: "2017-10-24"
 output:
   html_document:
@@ -22,12 +22,18 @@ set.seed(76)
 library(tidyverse)
 library(broom)
 library(knitr)
+library(ROCR)
 
 train <- read_csv("data/cs-training.csv") %>% 
   rename(Id = X1)
 test <- read_csv("data/cs-test.csv") %>% 
   rename(Id = X1)
 submission <- read_csv("data/sampleEntry.csv")
+drawtrain<-train
+newVariable <- factor(drawtrain$SeriousDlqin2yrs, levels=c(0,1), labels=c("No", "Yes"))
+newVariable<-as.data.frame(newVariable)
+newdata<-cbind.data.frame(newVariable, as.data.frame(train$age))
+
 ```
 
 Information on the competition can be found [here](https://www.kaggle.com/c/GiveMeSomeCredit/data).
@@ -45,7 +51,13 @@ Please indicate who you collaborated with on this assignment:
 Build the binary classifier based on a single predictor variable: `DebtRatio`,
 `age`, or `MonthlyIncome`. Justify this choice.
 
+
+Here I choose to base my predictions of having experienced Deliquency in the last 2 years on age. This is because age is normally distributed given Deliquency with a slight right skew as shown in the histogram and the outliers in the  boxplot below. 
+
 ```{r}
+ggplot(data=train, aes(x=age))+ labs(x="Age")+ geom_histogram(binwidth = 6)+ggtitle("Distribution of Age")
+ggplot(data=newVariable, aes(x=newVariable))+ labs(x="Experienced delinquency?")+ geom_bar()+ggtitle("Distribution of having experienced delinquency in the last 2 years")
+ggplot(data=newdata, aes(x=newVariable, y=train$age))+geom_boxplot()+labs(x="Experienced delinquency?", y="Age")+ggtitle("Distribution of age given having experienced delinquency")
 
 ```
 
@@ -56,7 +68,34 @@ Build the binary classifier based on a single predictor variable: `DebtRatio`,
 Based on the ultimate classifier you choose, plot a corresponding ROC curve.
 
 ```{r}
+model_formula <- as.formula(train$SeriousDlqin2yrs~train$age)
+model_logistic <- glm(model_formula, data=train, family="binomial")
 
+fitted_model <- model_logistic %>% 
+  broom::augment() %>% 
+  as_tibble() %>% 
+  mutate(p_hat = 1/(1 + exp(-.fitted)))
+#create empty vector and bind to test set to set set size equal to train set.
+X<-as.data.frame(vector(mode = "double",length = 48497))
+colnames(X)<-"test$age"
+testage<-rbind(as.data.frame(test$age),X)
+#make predictions
+predictions <- model_logistic %>% 
+  broom::augment(newdata=as.data.frame(testage)) %>% 
+  mutate(p_hat = 1/(1 + exp(-.fitted)))
+#retain only the predictions for the orginal test set
+predictions<-predictions[-c(101504:150000),]
+
+```
+```{r}
+
+# This bit of code computes the ROC curve
+pred <- prediction(predictions = fitted_model$p_hat, labels = fitted_model$train.SeriousDlqin2yrs)
+perf <- performance(pred, "tpr","fpr")
+# This bit of code computes the Area Under the Curve
+auc <- as.numeric(performance(pred,"auc")@y.values)
+auc
+plot(perf, main=paste("Area Under the Curve =", round(auc, 3)))
 ```
 
 
@@ -67,5 +106,22 @@ Instead of using any predictor information as you did above, switch your
 predictions to random guesses and plot the resulting ROC curve.
 
 ```{r}
+flip<-sample(c(0,1),101503,replace=TRUE)
+fphat<-sample(0.5, 101503, replace = TRUE)
+
+# This bit of code computes the ROC curve
+pred1 <- prediction(predictions = fphat, labels = flip)
+perf1 <- performance(pred1, "tpr","fpr")
+# This bit of code computes the Area Under the Curve
+auc1 <- as.numeric(performance(pred1,"auc")@y.values)
+auc1
+plot(perf1, main=paste("Area Under the Curve =", round(auc1, 3)))
 
 ```
+```{r}
+#submission file
+submit<-submission[,-2] %>% 
+  mutate(Probability=predictions$p_hat)
+write.csv(submit,file="submission.csv",row.names=FALSE)
+```
+
