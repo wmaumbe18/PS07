@@ -52,7 +52,8 @@ Build the binary classifier based on a single predictor variable: `DebtRatio`,
 `age`, or `MonthlyIncome`. Justify this choice.
 
 
-Here I choose to base my predictions of having experienced Deliquency in the last 2 years on age. This is because age is normally distributed given Deliquency with a slight right skew as shown in the histogram and the outliers in the  boxplot below. 
+Here I choose to base my predictions of having experienced Deliquency in the last 2 years on age. There is a clear enough difference in the median age between having experience deliquency or not in the  boxplot below. This difference is important for the use of age as a predictor for experiencing deliquency because having a clear age difference between those who experienced deliquency or not is important for establishing a threshold for prediction.
+
 
 ```{r}
 ggplot(data=train, aes(x=age))+ labs(x="Age")+ geom_histogram(binwidth = 6)+ggtitle("Distribution of Age")
